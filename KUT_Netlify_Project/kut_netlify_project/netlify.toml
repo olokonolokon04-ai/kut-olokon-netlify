@@ -1,0 +1,36 @@
+[build]
+  command = "npm run build"
+  publish = "public"
+  functions = "netlify/functions"
+
+[build.environment]
+  NODE_VERSION = "22"
+
+[functions]
+  node_bundler = "esbuild"
+
+[[redirects]]
+  from = "/login"
+  to = "/login.html"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/setup"
+  to = "/setup.html"
+  status = 200
+  force = true
+
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Content-Type-Options = "nosniff"
+    X-Frame-Options = "DENY"
+    Referrer-Policy = "no-referrer"
+    Permissions-Policy = "camera=(), microphone=(), geolocation=()"
+
+[[headers]]
+  for = "/api/*"
+  [headers.values]
+    Cache-Control = "private, no-store, max-age=0"
+    Pragma = "no-cache"
