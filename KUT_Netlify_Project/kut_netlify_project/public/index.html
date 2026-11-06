@@ -41,7 +41,10 @@ button{border:0;border-radius:7px;padding:10px 13px;background:var(--blue);color
 <p class="hint" id="passportStatus">Прикрепите до 5 сканов паспорта или ID-карты. Для стабильной загрузки через Netlify суммарный размер фото и документов — не более 3,2 МБ. ФИО вводится вручную.</p>
 <div class="field"><label for="fioFull">Фамилия и инициалы</label><input id="fioFull" placeholder="Например, ТАЛАНТБЕКОВ А.Т." required></div>
 <p class="hint">Введите фамилию и инициалы имени и отчества через пробел, например: ТАЛАНТБЕКОВ А.Т.</p>
-<div class="field"><label for="dept">Организация</label><input id="dept" placeholder="Например, строительный отдел" required></div>
+
+
+
+<div class="field"><label for="dept">Организация</label><input id="dept" placeholder="Введите название организации" required></div>
 <div class="field"><label for="num">№ пропуска</label><input id="num" placeholder="Заполнится автоматически"></div>
 <div class="field"><label for="date">Дата выдачи</label><input id="date" type="date"></div>
 <div class="field"><label for="job">Должность этого сотрудника</label><select id="job"><option value="">Выберите должность</option><option>Прораб</option><option>Инженер</option><option>Монтажник</option><option>Электрик</option><option>Сварщик</option><option>Каменщик</option><option>Бетонщик</option><option>Разнорабочий</option><option>Водитель</option><option>Охранник</option><option>Технадзор</option><option>Другое</option></select></div>
@@ -89,7 +92,8 @@ function renderApprovals(){
  if(pending.length){
   html+=pending.map(x=>{
    const docs=(x.passportFiles||[]).map((f,i)=>`<a href="/api/employees/${encodeURIComponent(x.id)}/documents/${encodeURIComponent(f.id)}" target="_blank" rel="noopener">Документ ${i+1}: ${esc(f.name)}</a>`).join(' · ');
-   return `<div class="approval-row"><div class="approval-main"><strong>${esc(displayName(x))}</strong><div class="approval-meta">Организация: ${esc(x.dept)} · Должность: ${esc(x.job)} · Пропуск № ${esc(x.num)}<br>Добавил: ${esc(x.createdByName)} · ${esc(new Date(x.createdAt).toLocaleString('ru-RU'))}<br>${docs||'Паспортные документы не прикреплены'}</div></div><div class="approval-buttons"><button class="green" data-approve="${esc(x.id)}">Подтвердить</button><button class="danger" data-reject="${esc(x.id)}">Вернуть</button></div></div>`;
+   const passportInfo=[x.docNo?`Документ № ${x.docNo}`:'',x.birthDate?`Дата рождения: ${x.birthDate}`:'',x.expiryDate?`Действует до: ${x.expiryDate}`:''].filter(Boolean).join(' · ');
+   return `<div class="approval-row"><div class="approval-main"><strong>${esc(displayName(x))}</strong><div class="approval-meta">Организация: ${esc(x.dept)} · Должность: ${esc(x.job)} · Пропуск № ${esc(x.num)}<br>${passportInfo?esc(passportInfo)+'<br>':''}Добавил: ${esc(x.createdByName)} · ${esc(new Date(x.createdAt).toLocaleString('ru-RU'))}<br>${docs||'Паспортные документы не прикреплены'}</div></div><div class="approval-buttons"><button class="green" data-approve="${esc(x.id)}">Подтвердить</button><button class="danger" data-reject="${esc(x.id)}">Вернуть</button></div></div>`;
   }).join('');
  } else html+='<div class="empty">Нет чужих записей, ожидающих подтверждения.</div>';
  if(own.length)html+=`<p class="own-pending">Ваших записей ожидает подтверждения другим сотрудником: ${own.length}. На этом компьютере под вашим логином подтвердить их нельзя.</p>`;
@@ -114,9 +118,10 @@ function render(){
  $('staffList').innerHTML=entries.map(x=>{
   const links=(x.passportFiles||[]).map((f,j)=>`<a href="/api/employees/${encodeURIComponent(x.id)}/documents/${encodeURIComponent(f.id)}" target="_blank" rel="noopener">Документ ${j+1}: ${esc(f.name)}</a>`).join('');
   const creator=`<small>Добавил: ${esc(x.createdByName||'')}</small>`;
+  const passportInfo=[x.docNo?`Документ № ${x.docNo}`:'',x.birthDate?`Рождение: ${x.birthDate}`:'',x.expiryDate?`Действует до: ${x.expiryDate}`:''].filter(Boolean).join(' · ');
   const canEdit = currentUser && x.approvalStatus==='rejected' && Number(x.createdBy)===Number(currentUser.id);
   const actions = `${canEdit?`<button class="green" data-edit="${esc(x.id)}">Исправить</button>`:''}${currentUser&&currentUser.role==='admin'?`<button class="danger" data-del="${esc(x.id)}">Удалить</button>`:''}`;
-  return `<div class="staffitem"><div><strong>${esc(displayName(x))}</strong><span>${esc(x.dept)} · ${esc(x.job)} · пропуск № ${esc(x.num)}</span>${statusLabel(x)}<br>${creator}${x.approvedByName?`<br><small>Подтвердил: ${esc(x.approvedByName)} · ${esc(x.approvedAt?new Date(x.approvedAt).toLocaleString('ru-RU'):'')}</small>`:''}${links?`<div class="doc-links">${links}</div>`:(x.passportRestricted?'<small>Паспортные данные скрыты; доступ есть у автора и проверяющего</small>':'<small>Паспорт не прикреплён</small>')}</div><div class="actions">${actions}</div></div>`;
+  return `<div class="staffitem"><div><strong>${esc(displayName(x))}</strong><span>${esc(x.dept)} · ${esc(x.job)} · пропуск № ${esc(x.num)}</span>${passportInfo?`<small>${esc(passportInfo)}</small>`:''}${statusLabel(x)}<br>${creator}${x.approvedByName?`<br><small>Подтвердил: ${esc(x.approvedByName)} · ${esc(x.approvedAt?new Date(x.approvedAt).toLocaleString('ru-RU'):'')}</small>`:''}${links?`<div class="doc-links">${links}</div>`:(x.passportRestricted?'<small>Паспортные данные скрыты; доступ есть у автора и проверяющего</small>':'<small>Паспорт не прикреплён</small>')}</div><div class="actions">${actions}</div></div>`;
  }).join('')||'<p class="hint">Пока нет сотрудников в общей базе.</p>';
  $('staffList').querySelectorAll('[data-del]').forEach(b=>b.addEventListener('click',async()=>{if(!confirm('Удалить эту запись и прикреплённые документы из общей базы?'))return;try{await api('/api/employees/'+encodeURIComponent(b.dataset.del),{method:'DELETE'});await loadEmployees()}catch(e){alert(e.message)}}));
  $('staffList').querySelectorAll('[data-edit]').forEach(b=>b.addEventListener('click',()=>beginEdit(b.dataset.edit)));
@@ -127,7 +132,8 @@ async function loadEmployees(){const data=await api('/api/employees');entries=da
 function clearForm(){['fioFull','dept','num','customJob'].forEach(id=>$(id).value='');$('job').value='';$('customJobWrap').hidden=true;$('photo').value='';$('passport').value='';selectedPassportFiles=[];$('editingId').value='';$('formTitle').textContent='Новый сотрудник';$('addBtn').textContent='Добавить пропуск';$('passportStatus').textContent='Для новой записи обязательно прикрепите паспорт. Суммарный размер фото и сканов — до 3,2 МБ. При исправлении старые документы сохраняются, если не загружать новые.';$('date').value=new Date().toISOString().slice(0,10)}
 function beginEdit(id){
  const x=entries.find(item=>item.id===id);if(!x||x.approvalStatus!=='rejected'||Number(x.createdBy)!==Number(currentUser.id))return;
- $('editingId').value=x.id;$('fioFull').value=displayName(x);$('dept').value=x.dept||'';$('num').value=x.num||'';$('date').value=x.date||'';
+ $('editingId').value=x.id;$('fioFull').value=displayName(x);
+ $('dept').value=x.dept||'';$('num').value=x.num||'';$('date').value=x.date||'';
  const options=Array.from($('job').options).map(o=>o.value);if(options.includes(x.job)){$('job').value=x.job;$('customJobWrap').hidden=true}else{$('job').value='Другое';$('customJobWrap').hidden=false;$('customJob').value=x.job||''}
  $('photo').value='';$('passport').value='';selectedPassportFiles=[];$('formTitle').textContent='Исправление возвращённой записи';$('addBtn').textContent='Сохранить и отправить повторно';
  $('passportStatus').textContent=`Сейчас прикреплено документов: ${(x.passportFiles||[]).length}. Не выбирайте новые файлы, чтобы оставить старые; выберите новые, чтобы заменить комплект.`;
@@ -140,7 +146,7 @@ $('addBtn').addEventListener('click',async()=>{
  const parsedName=parseFullName($('fioFull').value);const surname=parsedName?.surname||'',given=parsedName?.given||'',middle=parsedName?.middle||'';
  const selected=$('job').value,job=selected==='Другое'?$('customJob').value.trim():selected;
  const editingId=$('editingId').value;
- if(!parsedName||!surname||!given||!job||!$('dept').value.trim()){alert('Введите фамилию и инициалы в формате: ТАЛАНТБЕКОВ А.Т., а также организацию и должность.');return}if(!selectedPassportFiles.length&&!editingId){alert('Прикрепите хотя бы один скан паспорта или ID-карты.');return}
+ if(!parsedName||!surname||!given||!job||!$('dept').value.trim()){alert('Введите фамилию и инициалы в формате: ТАЛАНТБЕКОВ А.Т., а также отдел и должность.');return}if(!selectedPassportFiles.length&&!editingId){alert('Прикрепите хотя бы один скан паспорта или ID-карты.');return}
  const uploads=[...selectedPassportFiles,...Array.from($('photo').files||[])];
  const totalUploadBytes=uploads.reduce((sum,file)=>sum+file.size,0);
  if(totalUploadBytes>3.2*1024*1024){alert('Суммарный размер фото и паспортных файлов должен быть не более 3,2 МБ. Уменьшите размер сканов и попробуйте снова.');return}
