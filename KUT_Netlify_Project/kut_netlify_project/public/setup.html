@@ -1,0 +1,19 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Первичная настройка — КУТ</title>
+<style>
+*{box-sizing:border-box}body{margin:0;min-height:100vh;background:linear-gradient(135deg,#eaf3fc,#cfe5fa);font:15px Arial,sans-serif;color:#172b4d;display:grid;place-items:center}.box{width:min(480px,calc(100% - 28px));background:#fff;border-radius:16px;padding:28px;box-shadow:0 12px 35px #09265f22}.logo{background:linear-gradient(120deg,#06326f,#1682d3);color:#fff;border-radius:12px;padding:18px;margin:-4px -4px 20px}.logo h1{margin:0 0 6px;font-size:23px}.logo p{margin:0;font-size:13px;opacity:.9}.field{margin:14px 0}.field label{display:block;font-size:13px;font-weight:bold;margin-bottom:6px}.field input{width:100%;padding:12px;border:1px solid #b9c9dd;border-radius:8px;font-size:15px}button{width:100%;padding:12px;border:0;border-radius:8px;background:#16804b;color:#fff;font-weight:bold;font-size:15px;cursor:pointer;margin-top:10px}.hint{font-size:12px;color:#64748b;line-height:1.5}.error{font-size:13px;min-height:20px;color:#b42318}.success{color:#166534}
+</style></head>
+<body><main class="box"><header class="logo"><h1>КУТ — первичная настройка</h1><p>Создание первой учётной записи администратора</p></header>
+<form id="setupForm">
+<div class="field"><label for="token">Код настройки Netlify (KUT_SETUP_TOKEN)</label><input id="token" type="password" autocomplete="off" required></div>
+<div class="field"><label for="username">Логин администратора</label><input id="username" autocomplete="username" required minlength="3" maxlength="40" placeholder="например, kutadmin"></div>
+<div class="field"><label for="password">Надёжный пароль (не менее 14 символов)</label><input id="password" type="password" autocomplete="new-password" required minlength="14"></div>
+<div id="message" class="error"></div><button id="submit" type="submit">Создать администратора</button>
+</form><p class="hint">Эта страница доступна только для однократного создания первого администратора. После настройки удалите KUT_SETUP_TOKEN из переменных окружения Netlify и повторно опубликуйте сайт.</p><p class="hint"><a href="/login">Перейти ко входу</a></p>
+</main>
+<script>
+document.getElementById('setupForm').addEventListener('submit',async e=>{e.preventDefault();const b=document.getElementById('submit'),m=document.getElementById('message');b.disabled=true;b.textContent='Создаю...';m.textContent='';m.className='error';try{const r=await fetch('/api/setup',{method:'POST',credentials:'same-origin',headers:{'Content-Type':'application/json','X-Requested-With':'XMLHttpRequest'},body:JSON.stringify({setupToken:document.getElementById('token').value,username:document.getElementById('username').value.trim(),password:document.getElementById('password').value})});const d=await r.json().catch(()=>({}));if(!r.ok)throw new Error(d.error||`Ошибка ${r.status}`);m.textContent='Администратор создан. Сейчас перейдём ко входу.';m.className='error success';setTimeout(()=>location.href='/login',900)}catch(err){m.textContent=err.message}finally{b.disabled=false;b.textContent='Создать администратора'}});
+</script></body></html>
