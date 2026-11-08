@@ -516,6 +516,22 @@ async function route(req, user, pathname) {
     }
   }
 
+  const passwordMatch = routePath.match(/^\/users\/([^/]+)\/password$/);
+  if (passwordMatch && method === 'POST') {
+    if (!requestedWith(req)) return json({ error: 'Запрос отклонён.' }, 403);
+    if (!requireAdmin(user)) return json({ error: 'Недостаточно прав.' }, 403);
+    const targetId = passwordMatch[1];
+    if (!/^\\d+$/.test(targetId)) return json({ error: 'Неверный номер учётной записи.' }, 400);
+    const body = await bodyJson(req);
+    const password = String(body.password || '');
+    if (password.length < 12) return json({ error: 'Новый пароль должен содержать не менее 12 символов.' }, 400);
+    const target = await pool().query('SELECT id FROM users WHERE id=$1', [targetId]);
+    if (!target.rows[0]) return json({ error: 'Учётная запись не найдена.' }, 404);
+    const hash = await bcrypt.hash(password, 12);
+    await pool().query('UPDATE users SET password_hash=$1 WHERE id=$2', [hash, targetId]);
+    return json({ ok: true });
+  }
+
   const userMatch = routePath.match(/^\/users\/([^/]+)$/);
   if (userMatch && method === 'DELETE') {
     if (!requestedWith(req)) return json({ error: 'Запрос отклонён.' }, 403);
