@@ -40,8 +40,8 @@ button{border:0;border-radius:7px;padding:10px 13px;background:var(--blue);color
 <div class="field"><label for="photo">Фото сотрудника</label><input id="photo" type="file" accept="image/jpeg,image/png,image/webp"></div>
 <div class="field"><label for="passport">Фото / скан паспорта или ID-карты</label><input id="passport" type="file" accept="image/jpeg,image/png,image/webp,application/pdf" multiple></div>
 <p class="hint" id="passportStatus">Прикрепите до 5 сканов паспорта или ID-карты. Для стабильной загрузки через Netlify суммарный размер фото и документов — не более 3,2 МБ. ФИО вводится вручную.</p>
-<div class="field"><label for="fioFull">Фамилия и инициалы</label><input id="fioFull" placeholder="Например, ТАЛАНТБЕКОВ А.Т." required></div>
-<p class="hint">Введите фамилию и инициалы имени и отчества через пробел, например: ТАЛАНТБЕКОВ А.Т.</p>
+<div class="field"><label for="fioFull">ФИО</label><input id="fioFull" placeholder="Введите ФИО полностью" required></div>
+<p class="hint">ФИО можно вводить в свободной форме: полностью, с инициалами или в любом удобном формате.</p>
 
 
 
@@ -152,10 +152,10 @@ $('passport').addEventListener('change',e=>{selectedPassportFiles=Array.from(e.t
 $('job').addEventListener('change',()=>$('customJobWrap').hidden=$('job').value!=='Другое');
 $('clearBtn').addEventListener('click',clearForm);
 $('addBtn').addEventListener('click',async()=>{
- const parsedName=parseFullName($('fioFull').value);const surname=parsedName?.surname||'',given=parsedName?.given||'',middle=parsedName?.middle||'';
+ const surname=$('fioFull').value.trim(),given='',middle='';
  const selected=$('job').value,job=selected==='Другое'?$('customJob').value.trim():selected;
  const editingId=$('editingId').value;
- if(!parsedName||!surname||!given||!job||!$('dept').value.trim()){alert('Введите фамилию и инициалы в формате: ТАЛАНТБЕКОВ А.Т., а также отдел и должность.');return}if(!selectedPassportFiles.length&&!editingId){alert('Прикрепите хотя бы один скан паспорта или ID-карты.');return}
+ if(!surname||!job||!$('dept').value.trim()){alert('Введите ФИО в свободной форме, организацию и должность.');return}if(!selectedPassportFiles.length&&!editingId){alert('Прикрепите хотя бы один скан паспорта или ID-карты.');return}
  const uploads=[...selectedPassportFiles,...Array.from($('photo').files||[])];
  const totalUploadBytes=uploads.reduce((sum,file)=>sum+file.size,0);
  if(totalUploadBytes>3.2*1024*1024){alert('Суммарный размер фото и паспортных файлов должен быть не более 3,2 МБ. Уменьшите размер сканов и попробуйте снова.');return}
